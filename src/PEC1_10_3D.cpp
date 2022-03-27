@@ -42,6 +42,9 @@ float angleX = 0, angleY = 0, angleZ = 0;
 
 VECTOR angularVelocity = VECTOR(0, 0, 0);
 
+#define BASE_ANGULAR_VELOCITY 0.01f
+#define ANGULAR_VELOCITY_DECAY 0.91f
+
 // we need two structures, one that holds the position of all vertices
 // in object space,  and the other in screen space. the coords in world
 // space doesn't need to be stored
@@ -289,10 +292,10 @@ void update3D() {
         angularVelocity[0] = rand() % 10;
         angularVelocity[1] = rand() % 10;
         angularVelocity[2] = rand() % 10;
-        angularVelocity.setMagnitude(0.1f);
+        angularVelocity.setMagnitude(BASE_ANGULAR_VELOCITY);
     }
 
-    angularVelocity = angularVelocity * 0.5f;
+    angularVelocity = angularVelocity * ANGULAR_VELOCITY_DECAY;
 
     angleX += angularVelocity[0] * deltaTime;
     angleY += angularVelocity[1] * deltaTime;
