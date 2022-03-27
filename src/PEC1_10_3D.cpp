@@ -51,7 +51,7 @@ float uniformScale = 0;
 #define SIZE_CHANGE_SPEED 0.05f
 
 #define MAX_UNIFORM_SCALE 1.0f
-#define UNIFORM_SCALE_MODIFIER 0.99f
+#define UNIFORM_SCALE_MODIFIER 1.01f
 
 // we need two structures, one that holds the position of all vertices
 // in object space,  and the other in screen space. the coords in world
@@ -341,7 +341,11 @@ void update3D()
     else
     {
         sizeModifier += SIZE_CHANGE_SPEED * deltaTime;
-        uniformScale *= UNIFORM_SCALE_MODIFIER;
+
+        if (MusicCurrentBeat % 2 == 0)
+            uniformScale *= UNIFORM_SCALE_MODIFIER;
+        else
+            uniformScale *= 0.99f;
     }
     objScale = scale(uniformScale);
 
