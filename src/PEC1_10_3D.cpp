@@ -36,22 +36,28 @@ unsigned short *zbuffer;
 #define EXT_RADIUS 64
 #define INT_RADIUS 24
 
+#define BASE_ANGULAR_VELOCITY 0.01f
+#define ANGULAR_VELOCITY_DECAY 0.91f
+#define CONSTANT_ANGULAR_VELOCITY 0.1f * BASE_ANGULAR_VELOCITY
+
 //Current rotation angles
 float angleX = 0, angleY = 0, angleZ = 0;
 
 VECTOR angularVelocity = VECTOR(0, 0, 0);
 
-#define BASE_ANGULAR_VELOCITY 0.01f
-#define ANGULAR_VELOCITY_DECAY 0.91f
+#define BASE_BULK_MODIFIER 0
+#define BULK_CHANGE_SPEED 0.05f
+#define BULK_SPEED_DECAY 0.95f
 
-float sizeModifier = 0;
+float bulk = BASE_BULK_MODIFIER;
+float bulkChangeSpeed = BULK_CHANGE_SPEED;
+
+#define BASE_SCALE 1.0f
+#define SCALE_CHANGE_SPEED 0.005f
+#define SCALE_CHANGE_DECAY 0.91f
+
 float uniformScale = 0;
-
-#define MAX_SIZE_MODIFIER 0
-#define SIZE_CHANGE_SPEED 0.01f
-
-#define MAX_UNIFORM_SCALE 1.0f
-#define UNIFORM_SCALE_MODIFIER 1.01f
+float scaleChangeSpeed = SCALE_CHANGE_SPEED;
 
 // we need two structures, one that holds the position of all vertices
 // in object space,  and the other in screen space. the coords in world
@@ -99,8 +105,6 @@ MATRIX objScale;
 Mix_Music *mySong;
 #define BPM_MUSIC 128
 #define MSEG_BPM (60000 / BPM_MUSIC)
-#define FLASH_MAX_TIME 100
-int flashtime = 0;
 int MusicCurrentTime = 0;
 int MusicCurrentTimeBeat = 0;
 int MusicCurrentBeat = 0;
@@ -283,14 +287,13 @@ void initMusic()
         exit(1);
     }
     Mix_PlayMusic(mySong,0);
-    flashtime = 0;
     MusicCurrentTime = 0;
     MusicCurrentTimeBeat = 0;
     MusicCurrentBeat = 0;
     MusicPreviousBeat = -1;
 
-    sizeModifier = MAX_SIZE_MODIFIER;
-    uniformScale = MAX_UNIFORM_SCALE;
+    bulk = BASE_BULK_MODIFIER;
+    uniformScale = BASE_SCALE;
 }
 
 void updateMusic()
@@ -302,15 +305,6 @@ void updateMusic()
     {
         MusicCurrentTimeBeat = 0;
         MusicCurrentBeat ++;
-        flashtime = FLASH_MAX_TIME;
-    }
-    if (flashtime > 0)
-    {
-        flashtime -= deltaTime;
-    }
-    else
-    {
-        flashtime = 0;
     }
     if (!Mix_PlayingMusic())
     {
@@ -323,43 +317,31 @@ void update3D()
 {
 	memset(zbuffer, 255, SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(unsigned short));
 
-    if (MusicCurrentTime <= MSEG_BPM * 12)//9350)
+    if (MusicCurrentTime <= MSEG_BPM * 20)
     {
         uniformScale = 1;
 
         if (MusicPreviousBeat != MusicCurrentBeat)
         {
-            sizeModifier = MAX_SIZE_MODIFIER;
+            bulk = BASE_BULK_MODIFIER;
+            bulkChangeSpeed = BULK_CHANGE_SPEED;
         }
         else
         {
-            sizeModifier += SIZE_CHANGE_SPEED * deltaTime;
+            bulk += bulkChangeSpeed * deltaTime;
+            bulkChangeSpeed *= BULK_SPEED_DECAY;
         }
 
         angleX = M_PI_2;
         angleY = 0;
-        angleZ = 0;
-    }
-    else if (MusicCurrentTime <= MSEG_BPM * 20)
-    {
-        uniformScale = 1;
-
-        if (MusicPreviousBeat != MusicCurrentBeat)
-        {
-            sizeModifier = MAX_SIZE_MODIFIER;
-        }
+        if (MusicCurrentTime <= MSEG_BPM * 12)
+            angleZ = 0;
         else
-        {
-            sizeModifier += SIZE_CHANGE_SPEED * deltaTime;
-        }
-
-        angleX = M_PI_2;
-        angleY = 0;
-        angleZ += 0.25f * BASE_ANGULAR_VELOCITY * deltaTime;
+            angleZ += CONSTANT_ANGULAR_VELOCITY * deltaTime;
     }
     else
     {
-        sizeModifier = 0;
+        bulk = 0;
 
         if (MusicPreviousBeat != MusicCurrentBeat)
         {
@@ -368,17 +350,19 @@ void update3D()
             angularVelocity[2] = rand() % 10;
             angularVelocity.setMagnitude(BASE_ANGULAR_VELOCITY);
 
-            uniformScale = MAX_UNIFORM_SCALE;
+            uniformScale = BASE_SCALE;
+            scaleChangeSpeed = SCALE_CHANGE_SPEED;
         }
         else
         {
             if (MusicCurrentBeat % 2 == 0)
-                uniformScale *= UNIFORM_SCALE_MODIFIER;
+                uniformScale += scaleChangeSpeed * deltaTime;
             else
-                uniformScale *= 0.99f;
+                uniformScale -= scaleChangeSpeed * deltaTime;
+            scaleChangeSpeed *= SCALE_CHANGE_DECAY;
         }
 
-        angularVelocity = angularVelocity * ANGULAR_VELOCITY_DECAY;
+        angularVelocity *= ANGULAR_VELOCITY_DECAY;
 
         angleX += angularVelocity[0] * deltaTime;
         angleY += angularVelocity[1] * deltaTime;
@@ -710,7 +694,7 @@ void TransformPts()
 {
     for (int i = 0; i<num_vertices; i++)
     {
-        cur.vertices[i] = org.vertices[i] + org.normals[i] * sizeModifier;
+        cur.vertices[i] = org.vertices[i] + org.normals[i] * bulk;
         cur.vertices[i] = objScale * cur.vertices[i];
 
         // perform rotation
