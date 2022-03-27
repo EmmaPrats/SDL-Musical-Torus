@@ -47,8 +47,8 @@ VECTOR angularVelocity = VECTOR(0, 0, 0);
 float sizeModifier = 0;
 float uniformScale = 0;
 
-#define MAX_SIZE_MODIFIER 10.0f
-#define SIZE_CHANGE_SPEED 0.05f
+#define MAX_SIZE_MODIFIER 0
+#define SIZE_CHANGE_SPEED 0.01f
 
 #define MAX_UNIFORM_SCALE 1.0f
 #define UNIFORM_SCALE_MODIFIER 1.01f
@@ -321,47 +321,74 @@ void updateMusic()
 
 void update3D()
 {
-	// clear the zbuffer
 	memset(zbuffer, 255, SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(unsigned short));
-	// set the torus' rotation
-    //objrot = rotX((float)currentTime / 1100 + M_PI*cos((float)currentTime / 2200))
-    //	* rotY((float)currentTime / 1300 + M_PI*sin((float)currentTime / 2600))
-    //	* rotZ((float)currentTime / 1500 - M_PI*cos((float)currentTime / 2500));
 
-    if (MusicPreviousBeat != MusicCurrentBeat)
+    if (MusicCurrentTime <= MSEG_BPM * 12)//9350)
     {
-        angularVelocity[0] = rand() % 10;
-        angularVelocity[1] = rand() % 10;
-        angularVelocity[2] = rand() % 10;
-        angularVelocity.setMagnitude(BASE_ANGULAR_VELOCITY);
+        uniformScale = 1;
 
-        sizeModifier = MAX_SIZE_MODIFIER;
-        uniformScale = MAX_UNIFORM_SCALE;
+        if (MusicPreviousBeat != MusicCurrentBeat)
+        {
+            sizeModifier = MAX_SIZE_MODIFIER;
+        }
+        else
+        {
+            sizeModifier += SIZE_CHANGE_SPEED * deltaTime;
+        }
+
+        angleX = M_PI_2;
+        angleY = 0;
+        angleZ = 0;
+    }
+    else if (MusicCurrentTime <= MSEG_BPM * 20)
+    {
+        uniformScale = 1;
+
+        if (MusicPreviousBeat != MusicCurrentBeat)
+        {
+            sizeModifier = MAX_SIZE_MODIFIER;
+        }
+        else
+        {
+            sizeModifier += SIZE_CHANGE_SPEED * deltaTime;
+        }
+
+        angleX = M_PI_2;
+        angleY = 0;
+        angleZ += 0.25f * BASE_ANGULAR_VELOCITY * deltaTime;
     }
     else
     {
-        sizeModifier += SIZE_CHANGE_SPEED * deltaTime;
+        sizeModifier = 0;
 
-        if (MusicCurrentBeat % 2 == 0)
-            uniformScale *= UNIFORM_SCALE_MODIFIER;
+        if (MusicPreviousBeat != MusicCurrentBeat)
+        {
+            angularVelocity[0] = rand() % 10;
+            angularVelocity[1] = rand() % 10;
+            angularVelocity[2] = rand() % 10;
+            angularVelocity.setMagnitude(BASE_ANGULAR_VELOCITY);
+
+            uniformScale = MAX_UNIFORM_SCALE;
+        }
         else
-            uniformScale *= 0.99f;
+        {
+            if (MusicCurrentBeat % 2 == 0)
+                uniformScale *= UNIFORM_SCALE_MODIFIER;
+            else
+                uniformScale *= 0.99f;
+        }
+
+        angularVelocity = angularVelocity * ANGULAR_VELOCITY_DECAY;
+
+        angleX += angularVelocity[0] * deltaTime;
+        angleY += angularVelocity[1] * deltaTime;
+        angleZ += angularVelocity[2] * deltaTime;
     }
+
+	objpos = VECTOR(0, 0, 250);
+    objrot = rotX(angleX) * rotY(angleY) * rotZ(angleZ);
     objScale = scale(uniformScale);
 
-    angularVelocity = angularVelocity * ANGULAR_VELOCITY_DECAY;
-
-    angleX += angularVelocity[0] * deltaTime;
-    angleY += angularVelocity[1] * deltaTime;
-    angleZ += angularVelocity[2] * deltaTime;
-
-    objrot = rotX(angleX) * rotY(angleY) * rotZ(angleZ);
-	// and it's position
-	objpos = VECTOR(0, 0, 250);/*
-		48 * cos((float)currentTime / 1266.0f),
-		48 * sin((float)currentTime / 1424.0f),
-		200 + 80 * sin((float)currentTime / 1912.0f));*/
-	// rotate and project our points
 	TransformPts();
 }
 
@@ -681,17 +708,17 @@ void init_object()
 */
 void TransformPts()
 {
-	for (int i = 0; i<num_vertices; i++)
-	{
-        //cur.vertices[i] = org.vertices[i] + org.normals[i] * sizeModifier;
-        cur.vertices[i] = objScale * org.vertices[i];
+    for (int i = 0; i<num_vertices; i++)
+    {
+        cur.vertices[i] = org.vertices[i] + org.normals[i] * sizeModifier;
+        cur.vertices[i] = objScale * cur.vertices[i];
 
-		// perform rotation
-		cur.normals[i] = objrot * org.normals[i];
-		cur.vertices[i] = objrot * cur.vertices[i];
-		// now project onto the screen
-		cur.vertices[i][2] += objpos[2];
-		cur.vertices[i][0] = SCREEN_HEIGHT * (cur.vertices[i][0] + objpos[0]) / cur.vertices[i][2] + (SCREEN_WIDTH / 2);
-		cur.vertices[i][1] = SCREEN_HEIGHT * (cur.vertices[i][1] + objpos[1]) / cur.vertices[i][2] + (SCREEN_HEIGHT /2);
-	}
+        // perform rotation
+        cur.normals[i] = objrot * org.normals[i];
+        cur.vertices[i] = objrot * cur.vertices[i];
+        // now project onto the screen
+        cur.vertices[i][2] += objpos[2];
+        cur.vertices[i][0] = SCREEN_HEIGHT * (cur.vertices[i][0] + objpos[0]) / cur.vertices[i][2] + (SCREEN_WIDTH / 2);
+        cur.vertices[i][1] = SCREEN_HEIGHT * (cur.vertices[i][1] + objpos[1]) / cur.vertices[i][2] + (SCREEN_HEIGHT /2);
+    }
 }
