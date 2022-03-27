@@ -76,6 +76,14 @@ public:
             v[1] *= id;
             v[2] *= id;
         }
+
+        void setMagnitude(float magnitude)
+        {
+            float id = 1 / sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]) * magnitude;
+            v[0] *= id;
+            v[1] *= id;
+            v[2] *= id;
+        }
 };
 
 inline VECTOR normalize(const VECTOR &a)

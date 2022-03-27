@@ -289,30 +289,10 @@ void update3D() {
         angularVelocity[0] = rand() % 10;
         angularVelocity[1] = rand() % 10;
         angularVelocity[2] = rand() % 10;
+        angularVelocity.setMagnitude(0.1f);
     }
 
-    //angularVelocity.normalize();
-    angularVelocity = angularVelocity * (0.01f * flashtime);
-
-    //if (currentTime < 3000)
-    //{
-    //    angularVelocity[0] = 0.001f;
-    //    angularVelocity[1] = 0;
-    //    angularVelocity[2] = 0;
-    //}
-    //else if (currentTime < 5000)
-    //{
-    //    angularVelocity[0] = 0;
-    //    angularVelocity[1] = 0.001f;
-    //    angularVelocity[2] = 0;
-    //}
-    //else
-    //{
-    //    angularVelocity[0] = 0;
-    //    angularVelocity[1] = 0;
-    //    angularVelocity[2] = 0.001f;
-    //}
-    printf("Angular velocity: %f, %f, %f\n", angularVelocity[0], angularVelocity[1], angularVelocity[2]);
+    angularVelocity = angularVelocity * 0.5f;
 
     angleX += angularVelocity[0] * deltaTime;
     angleY += angularVelocity[1] * deltaTime;
