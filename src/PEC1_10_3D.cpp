@@ -20,6 +20,8 @@ SDL_Surface* screenSurface = NULL;
 int lastTime = 0, currentTime, deltaTime;
 float msFrame = 1 / (FPS / 1000.0f);
 
+/////////////////// 3D OBJECT ///////////////////
+
 // Texture
 SDL_Surface* texture;
 // buffer of 256x256 containing the light pattern (fake phong ;)
@@ -27,9 +29,6 @@ unsigned char *light;
 
 // our 16 bit zbuffer
 unsigned short *zbuffer;
-
-// the look-up table
-unsigned char *lut;
 
 // properties of our torus
 #define SLICES 32
@@ -93,6 +92,22 @@ MATRIX objrot;
 VECTOR objpos;
 MATRIX objScale;
 
+/////////////////////////////////////////////////
+
+///////////////////// MUSIC /////////////////////
+
+Mix_Music *mySong;
+#define BPM_MUSIC 128
+#define MSEG_BPM (60000 / BPM_MUSIC)
+#define FLASH_MAX_TIME 100
+int flashtime = 0;
+int MusicCurrentTime = 0;
+int MusicCurrentTimeBeat = 0;
+int MusicCurrentBeat = 0;
+int MusicPreviousBeat = -1;
+
+/////////////////////////////////////////////////
+
 bool initSDL();
 void update();
 void render();
@@ -111,6 +126,8 @@ void DrawPolies();
 void init_object();
 void TransformPts();
 
+void initMusic();
+void updateMusic();
 
 int main( int argc, char* args[] )
 {
@@ -124,6 +141,7 @@ int main( int argc, char* args[] )
 	{
 		IMG_Init(IMG_INIT_PNG);
 		init3D();
+        initMusic();
 
 		//Main loop flag
 		bool quit = false;
@@ -167,7 +185,6 @@ int main( int argc, char* args[] )
 	return 0;
 }
 
-
 bool initSDL() {
 
 	//Initialize SDL
@@ -189,7 +206,9 @@ bool initSDL() {
 	return true;
 }
 
-void update(){
+void update()
+{
+    updateMusic();
 	update3D();
 }
 
@@ -252,14 +271,27 @@ void init3D() {
 
 }
 
-#define BPM_MUSIC 128
-#define MSEG_BPM (60000 / BPM_MUSIC)
-#define FLASH_MAX_TIME 100
-int flashtime = 0;
-int MusicCurrentTime = 0;
-int MusicCurrentTimeBeat = 0;
-int MusicCurrentBeat = 0;
-int MusicPreviousBeat = -1;
+void initMusic()
+{
+    Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 4096);
+    Mix_Init(MIX_INIT_OGG);
+    mySong =  Mix_LoadMUS("resources/Blastculture-Gravitation.ogg");
+    if (!mySong)
+    {
+        std::cout << "Error loading Music: " << Mix_GetError() << std::endl;
+        close();
+        exit(1);
+    }
+    Mix_PlayMusic(mySong,0);
+    flashtime = 0;
+    MusicCurrentTime = 0;
+    MusicCurrentTimeBeat = 0;
+    MusicCurrentBeat = 0;
+    MusicPreviousBeat = -1;
+
+    sizeModifier = MAX_SIZE_MODIFIER;
+    uniformScale = MAX_UNIFORM_SCALE;
+}
 
 void updateMusic()
 {
@@ -280,22 +312,21 @@ void updateMusic()
     {
         flashtime = 0;
     }
-    //if (!Mix_PlayingMusic())
-    //{
-    //    close();
-    //    exit(0);
-    //}
+    if (!Mix_PlayingMusic())
+    {
+        close();
+        exit(0);
+    }
 }
 
-void update3D() {
+void update3D()
+{
 	// clear the zbuffer
 	memset(zbuffer, 255, SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(unsigned short));
 	// set the torus' rotation
     //objrot = rotX((float)currentTime / 1100 + M_PI*cos((float)currentTime / 2200))
     //	* rotY((float)currentTime / 1300 + M_PI*sin((float)currentTime / 2600))
     //	* rotZ((float)currentTime / 1500 - M_PI*cos((float)currentTime / 2500));
-
-    updateMusic();
 
     if (MusicPreviousBeat != MusicCurrentBeat)
     {
@@ -322,7 +353,7 @@ void update3D() {
 
     objrot = rotX(angleX) * rotY(angleY) * rotZ(angleZ);
 	// and it's position
-	objpos = VECTOR(0, 0, 200);/*
+	objpos = VECTOR(0, 0, 250);/*
 		48 * cos((float)currentTime / 1266.0f),
 		48 * sin((float)currentTime / 1424.0f),
 		200 + 80 * sin((float)currentTime / 1912.0f));*/
