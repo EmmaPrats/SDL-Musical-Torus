@@ -76,4 +76,18 @@ static MATRIX rotZ(const double theta)
 			 0, 0, 1);
 }
 
+static MATRIX scale(const double x, const double y, const double z)
+{
+    return MATRIX(x, 0, 0,
+                  0, y, 0,
+                  0, 0, z);
+}
+
+static MATRIX scale(const double s)
+{
+    return MATRIX(s, 0, 0,
+                  0, s, 0,
+                  0, 0, s);
+}
+
 #endif //__MATRIX_H_

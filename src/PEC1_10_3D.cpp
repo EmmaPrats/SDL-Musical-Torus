@@ -45,6 +45,11 @@ VECTOR angularVelocity = VECTOR(0, 0, 0);
 #define BASE_ANGULAR_VELOCITY 0.01f
 #define ANGULAR_VELOCITY_DECAY 0.91f
 
+float sizeModifier = 0;
+
+#define MAX_SIZE_MODIFIER 1.0f
+#define SIZE_CHANGE_SPEED -0.001f
+
 // we need two structures, one that holds the position of all vertices
 // in object space,  and the other in screen space. the coords in world
 // space doesn't need to be stored
@@ -82,6 +87,7 @@ int poly_minY, poly_maxY;
 // object position and orientation
 MATRIX objrot;
 VECTOR objpos;
+MATRIX objScale;
 
 bool initSDL();
 void update();
@@ -244,7 +250,7 @@ void init3D() {
 
 #define BPM_MUSIC 128
 #define MSEG_BPM (60000 / BPM_MUSIC)
-#define FLASH_MAX_TIME 300
+#define FLASH_MAX_TIME 100
 int flashtime = 0;
 int MusicCurrentTime = 0;
 int MusicCurrentTimeBeat = 0;
@@ -293,7 +299,15 @@ void update3D() {
         angularVelocity[1] = rand() % 10;
         angularVelocity[2] = rand() % 10;
         angularVelocity.setMagnitude(BASE_ANGULAR_VELOCITY);
+
+        sizeModifier = MAX_SIZE_MODIFIER;
     }
+    else
+    {
+        //sizeModifier += SIZE_CHANGE_SPEED * deltaTime;
+        sizeModifier *= 0.99f;
+    }
+    objScale = scale(sizeModifier);
 
     angularVelocity = angularVelocity * ANGULAR_VELOCITY_DECAY;
 
@@ -570,8 +584,7 @@ void init_object()
             cur.vertices[k] = org.vertices[k];
 			// then find the normal, i.e. the normalised vector representing the
 			// distance to the correpsonding point on C1
-			org.normals[k] = normalize(org.vertices[k] -
-				VECTOR(EXT_RADIUS*ca, 0, EXT_RADIUS*sa));
+			org.normals[k] = normalize(org.vertices[k] - VECTOR(EXT_RADIUS*ca, 0, EXT_RADIUS*sa));
             cur.normals[k] = org.normals[k];
 			k++;
 		}
@@ -631,9 +644,12 @@ void TransformPts()
 {
 	for (int i = 0; i<num_vertices; i++)
 	{
+        //cur.vertices[i] = org.vertices[i] + org.normals[i] * sizeModifier;
+        cur.vertices[i] = objScale * org.vertices[i];
+
 		// perform rotation
 		cur.normals[i] = objrot * org.normals[i];
-		cur.vertices[i] = objrot * org.vertices[i];
+		cur.vertices[i] = objrot * cur.vertices[i];
 		// now project onto the screen
 		cur.vertices[i][2] += objpos[2];
 		cur.vertices[i][0] = SCREEN_HEIGHT * (cur.vertices[i][0] + objpos[0]) / cur.vertices[i][2] + (SCREEN_WIDTH / 2);
