@@ -1,5 +1,6 @@
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_mixer.h>
 #include <iostream>
 #include <cmath>
 
@@ -35,6 +36,11 @@ unsigned char *lut;
 #define SPANS 16
 #define EXT_RADIUS 64
 #define INT_RADIUS 24
+
+//Current rotation angles
+float angleX = 0, angleY = 0, angleZ = 0;
+
+VECTOR angularVelocity = VECTOR(0, 0, 0);
 
 // we need two structures, one that holds the position of all vertices
 // in object space,  and the other in screen space. the coords in world
@@ -233,20 +239,94 @@ void init3D() {
 
 }
 
+#define BPM_MUSIC 128
+#define MSEG_BPM (60000 / BPM_MUSIC)
+#define FLASH_MAX_TIME 300
+int flashtime = 0;
+int MusicCurrentTime = 0;
+int MusicCurrentTimeBeat = 0;
+int MusicCurrentBeat = 0;
+int MusicPreviousBeat = -1;
+
+void updateMusic()
+{
+    MusicCurrentTime += deltaTime;
+    MusicCurrentTimeBeat += deltaTime;
+    MusicPreviousBeat = MusicCurrentBeat;
+    if (MusicCurrentTimeBeat >= MSEG_BPM)
+    {
+        MusicCurrentTimeBeat = 0;
+        MusicCurrentBeat ++;
+        flashtime = FLASH_MAX_TIME;
+    }
+    if (flashtime > 0)
+    {
+        flashtime -= deltaTime;
+    }
+    else
+    {
+        flashtime = 0;
+    }
+    //if (!Mix_PlayingMusic())
+    //{
+    //    close();
+    //    exit(0);
+    //}
+}
+
 void update3D() {
 	// clear the zbuffer
 	memset(zbuffer, 255, SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(unsigned short));
 	// set the torus' rotation
-	objrot = rotX((float)currentTime / 1100 + M_PI*cos((float)currentTime / 2200))
-		* rotY((float)currentTime / 1300 + M_PI*sin((float)currentTime / 2600))
-		* rotZ((float)currentTime / 1500 - M_PI*cos((float)currentTime / 2500));
+    //objrot = rotX((float)currentTime / 1100 + M_PI*cos((float)currentTime / 2200))
+    //	* rotY((float)currentTime / 1300 + M_PI*sin((float)currentTime / 2600))
+    //	* rotZ((float)currentTime / 1500 - M_PI*cos((float)currentTime / 2500));
+
+    updateMusic();
+
+    if (MusicPreviousBeat != MusicCurrentBeat)
+    {
+        angularVelocity[0] = rand() % 10;
+        angularVelocity[1] = rand() % 10;
+        angularVelocity[2] = rand() % 10;
+    }
+
+    //angularVelocity.normalize();
+    angularVelocity = angularVelocity * (0.01f * flashtime);
+
+    //if (currentTime < 3000)
+    //{
+    //    angularVelocity[0] = 0.001f;
+    //    angularVelocity[1] = 0;
+    //    angularVelocity[2] = 0;
+    //}
+    //else if (currentTime < 5000)
+    //{
+    //    angularVelocity[0] = 0;
+    //    angularVelocity[1] = 0.001f;
+    //    angularVelocity[2] = 0;
+    //}
+    //else
+    //{
+    //    angularVelocity[0] = 0;
+    //    angularVelocity[1] = 0;
+    //    angularVelocity[2] = 0.001f;
+    //}
+    printf("Angular velocity: %f, %f, %f\n", angularVelocity[0], angularVelocity[1], angularVelocity[2]);
+
+    angleX += angularVelocity[0] * deltaTime;
+    angleY += angularVelocity[1] * deltaTime;
+    angleZ += angularVelocity[2] * deltaTime;
+
+    objrot = rotX(angleX) * rotY(angleY) * rotZ(angleZ);
 	// and it's position
-	objpos = VECTOR(
+	objpos = VECTOR(0, 0, 200);/*
 		48 * cos((float)currentTime / 1266.0f),
 		48 * sin((float)currentTime / 1424.0f),
-		200 + 80 * sin((float)currentTime / 1912.0f));
+		200 + 80 * sin((float)currentTime / 1912.0f));*/
 	// rotate and project our points
 	TransformPts();
+    //TransformPtsAccum();
 }
 
 void render3D() {
@@ -504,10 +584,12 @@ void init_object()
 				int_rad * ca,
 				INT_RADIUS*sin(int_angle),
 				int_rad * sa);
+            cur.vertices[k] = org.vertices[k];
 			// then find the normal, i.e. the normalised vector representing the
 			// distance to the correpsonding point on C1
 			org.normals[k] = normalize(org.vertices[k] -
 				VECTOR(EXT_RADIUS*ca, 0, EXT_RADIUS*sa));
+            cur.normals[k] = org.normals[k];
 			k++;
 		}
 	}

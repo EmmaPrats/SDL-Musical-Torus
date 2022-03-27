@@ -48,6 +48,14 @@ public:
         return r;
     }
 
+    VECTOR &operator*=(const float a)
+    {
+        v[0] *= a;
+        v[1] *= a;
+        v[2] *= a;
+        return *this;
+    }
+
     VECTOR operator/(const float a)
     {
         VECTOR r;
@@ -60,6 +68,14 @@ public:
         VECTOR() {}
         VECTOR(const float X, const float Y, const float Z) { v[0]=X; v[1]=Y; v[2]=Z; }
         ~VECTOR() {}
+
+        void normalize()
+        {
+            float id = 1 / sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+            v[0] *= id;
+            v[1] *= id;
+            v[2] *= id;
+        }
 };
 
 inline VECTOR normalize(const VECTOR &a)
