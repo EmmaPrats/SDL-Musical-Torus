@@ -38,7 +38,7 @@ unsigned short *zbuffer;
 
 #define BASE_ANGULAR_VELOCITY 0.01f
 #define ANGULAR_VELOCITY_DECAY 0.91f
-#define CONSTANT_ANGULAR_VELOCITY 0.1f * BASE_ANGULAR_VELOCITY
+#define CONSTANT_ANGULAR_VELOCITY 0.001f
 
 //Current rotation angles
 float angleX = 0, angleY = 0, angleZ = 0;
@@ -198,7 +198,7 @@ bool initSDL() {
 		return false;
 	}
 	//Create window
-	window = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+	window = SDL_CreateWindow("Dancing Torus", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
 
 	if (window == NULL)
 	{
@@ -315,7 +315,7 @@ void updateMusic()
 
 void update3D()
 {
-	memset(zbuffer, 255, SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(unsigned short));
+    memset(zbuffer, 255, SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(unsigned short));
 
     if (MusicCurrentTime <= MSEG_BPM * 20)
     {
@@ -369,11 +369,11 @@ void update3D()
         angleZ += angularVelocity[2] * deltaTime;
     }
 
-	objpos = VECTOR(0, 0, 250);
+    objpos = VECTOR(0, 0, 250);
     objrot = rotX(angleX) * rotY(angleY) * rotZ(angleZ);
     objScale = scale(uniformScale);
 
-	TransformPts();
+    TransformPts();
 }
 
 void render3D() {
