@@ -46,6 +46,7 @@ VECTOR angularVelocity = VECTOR(0, 0, 0);
 #define ANGULAR_VELOCITY_DECAY 0.91f
 
 float sizeModifier = 0;
+float uniformScale = 0;
 
 #define MAX_SIZE_MODIFIER 1.0f
 #define SIZE_CHANGE_SPEED -0.001f
@@ -301,13 +302,14 @@ void update3D() {
         angularVelocity.setMagnitude(BASE_ANGULAR_VELOCITY);
 
         sizeModifier = MAX_SIZE_MODIFIER;
+        uniformScale = MAX_SIZE_MODIFIER;
     }
     else
     {
         //sizeModifier += SIZE_CHANGE_SPEED * deltaTime;
-        sizeModifier *= 0.99f;
+        uniformScale *= 0.99f;
     }
-    objScale = scale(sizeModifier);
+    objScale = scale(uniformScale);
 
     angularVelocity = angularVelocity * ANGULAR_VELOCITY_DECAY;
 
@@ -323,7 +325,6 @@ void update3D() {
 		200 + 80 * sin((float)currentTime / 1912.0f));*/
 	// rotate and project our points
 	TransformPts();
-    //TransformPtsAccum();
 }
 
 void render3D() {
