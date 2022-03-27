@@ -48,8 +48,11 @@ VECTOR angularVelocity = VECTOR(0, 0, 0);
 float sizeModifier = 0;
 float uniformScale = 0;
 
-#define MAX_SIZE_MODIFIER 1.0f
-#define SIZE_CHANGE_SPEED -0.001f
+#define MAX_SIZE_MODIFIER 10.0f
+#define SIZE_CHANGE_SPEED 0.05f
+
+#define MAX_UNIFORM_SCALE 1.0f
+#define UNIFORM_SCALE_MODIFIER 0.99f
 
 // we need two structures, one that holds the position of all vertices
 // in object space,  and the other in screen space. the coords in world
@@ -302,12 +305,12 @@ void update3D() {
         angularVelocity.setMagnitude(BASE_ANGULAR_VELOCITY);
 
         sizeModifier = MAX_SIZE_MODIFIER;
-        uniformScale = MAX_SIZE_MODIFIER;
+        uniformScale = MAX_UNIFORM_SCALE;
     }
     else
     {
-        //sizeModifier += SIZE_CHANGE_SPEED * deltaTime;
-        uniformScale *= 0.99f;
+        sizeModifier += SIZE_CHANGE_SPEED * deltaTime;
+        uniformScale *= UNIFORM_SCALE_MODIFIER;
     }
     objScale = scale(uniformScale);
 
