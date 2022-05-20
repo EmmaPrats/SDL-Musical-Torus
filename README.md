@@ -1,6 +1,6 @@
 # SDL Musical Torus
 
-This is a demo of a torus dancing to the rhythm of the music, using the Simple DirectMedia Layer library, and implemented in C++.
+This is a demo of a torus dancing to the rhythm of the music, using the [Simple DirectMedia Layer](https://www.libsdl.org) library, and implemented in C++.
 
 The torus has different movements:
 - Rotation
